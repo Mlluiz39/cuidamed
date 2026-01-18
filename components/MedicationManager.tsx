@@ -171,17 +171,17 @@ const MedicationManager: React.FC = () => {
   };
 
   return (
-    <div className="space-y-6 animate-fadeIn">
+    <div className="space-y-6">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
         <div>
           <h2 className="text-2xl font-bold text-slate-800">Medicamentos</h2>
           <p className="text-slate-500">Gerencie os medicamentos de todos os pacientes.</p>
         </div>
-        <div className="flex gap-2 w-full md:w-auto">
+        <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
           <select 
             value={selectedPatient}
             onChange={(e) => setSelectedPatient(e.target.value)}
-            className="flex-1 md:flex-none px-4 py-2 border border-slate-200 rounded-xl bg-white text-slate-700 font-medium text-sm"
+            className="w-full sm:w-auto px-4 py-2 border border-slate-200 rounded-xl bg-white text-slate-700 font-medium text-sm"
           >
             <option value="all">Todos os Pacientes</option>
             {patients.map(p => (
@@ -190,7 +190,7 @@ const MedicationManager: React.FC = () => {
           </select>
           <button 
             onClick={() => setIsAddingNew(true)}
-            className="bg-blue-600 text-white px-4 py-2 rounded-xl font-bold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-100 whitespace-nowrap"
+            className="w-full sm:w-auto bg-blue-600 text-white px-4 py-2 rounded-xl font-bold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-100 whitespace-nowrap"
           >
             + Novo Medicamento
           </button>

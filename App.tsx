@@ -15,6 +15,7 @@ import AlertsHistory from './components/AlertsHistory'
 const App: React.FC = () => {
   const [session, setSession] = useState<Session | null>(null)
   const [currentTab, setCurrentTab] = useState('dashboard')
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
   const [loading, setLoading] = useState(true)
   const [historyFilter, setHistoryFilter] = useState<{ patientId?: string }>({})
 
@@ -78,10 +79,15 @@ const App: React.FC = () => {
       <ToastContainer />
 
       {/* Sidebar */}
-      <Sidebar currentTab={currentTab} setTab={setCurrentTab} />
+      <Sidebar 
+        currentTab={currentTab} 
+        setTab={setCurrentTab} 
+        isOpen={isMobileMenuOpen}
+        onClose={() => setIsMobileMenuOpen(false)}
+      />
 
       {/* Main content */}
-      <main className="flex-1 md:ml-64 p-4 md:p-8">
+      <main className="flex-1 md:ml-64 p-4 md:p-8 pb-24">
         {/* Mobile Header */}
         <div className="md:hidden flex items-center justify-between mb-6 bg-white p-4 rounded-xl shadow-sm border border-slate-100">
           <div className="flex items-center gap-2">
@@ -90,7 +96,12 @@ const App: React.FC = () => {
             </div>
             <h1 className="font-bold text-slate-800">CuidaMed</h1>
           </div>
-          <button className="text-slate-500">☰</button>
+          <button 
+            className="text-slate-500"
+            onClick={() => setIsMobileMenuOpen(true)}
+          >
+            ☰
+          </button>
         </div>
 
         {/* Dynamic content */}
@@ -118,6 +129,16 @@ const App: React.FC = () => {
           >
             <span className="text-xl">👥</span>
             <span className="text-[10px] font-bold">Pacientes</span>
+          </button>
+
+          <button
+            onClick={() => setCurrentTab('medications')}
+            className={`p-2 flex flex-col items-center ${
+              currentTab === 'medications' ? 'text-blue-600' : 'text-slate-400'
+            }`}
+          >
+            <span className="text-xl">💊</span>
+            <span className="text-[10px] font-bold">Remédios</span>
           </button>
 
           <button
