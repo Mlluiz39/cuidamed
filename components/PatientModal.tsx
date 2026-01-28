@@ -25,13 +25,12 @@ const PatientModal: React.FC<PatientModalProps> = ({ isOpen, onClose, onSuccess,
     if (isOpen && patientToEdit) {
       setFormData({
         name: patientToEdit.name,
-        birthDate: patientToEdit.birthDate || '', // Usando birthDate
+        birthDate: patientToEdit.birthDate || '',
         phone: patientToEdit.phone || '',
-        caregiverName: patientToEdit.caregiverName,
-        caregiverPhone: patientToEdit.caregiverPhone,
+        caregiverName: patientToEdit.caregiverName || '',
+        caregiverPhone: patientToEdit.caregiverPhone || '',
       });
     } else if (isOpen && !patientToEdit) {
-      // Limpar form se for novo cadastro
       setFormData({
         name: '',
         birthDate: '',
@@ -44,6 +43,43 @@ const PatientModal: React.FC<PatientModalProps> = ({ isOpen, onClose, onSuccess,
 
   if (!isOpen) return null;
 
+  const ensureOrganizationExists = async (userId: string, userEmail?: string) => {
+    try {
+      // Verificar se a organização existe
+      const { data: existingOrg } = await supabase
+        .from('organizations')
+        .select('id')
+        .eq('id', userId)
+        .single();
+
+      if (existingOrg) {
+        return true; // Organização já existe
+      }
+
+      // Criar organização se não existir
+      const { error: orgError } = await supabase
+        .from('organizations')
+        .insert({
+          id: userId,
+          name: userEmail?.split('@')[0] || 'Minha Organização',
+          created_at: new Date().toISOString(),
+        });
+
+      if (orgError) {
+        // Se erro 23505 (duplicate key), a organização já existe, está tudo bem
+        if (orgError.code === '23505') {
+          return true;
+        }
+        throw orgError;
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Erro ao criar organização:', error);
+      throw error;
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
@@ -53,19 +89,18 @@ const PatientModal: React.FC<PatientModalProps> = ({ isOpen, onClose, onSuccess,
       
       if (!user) throw new Error('Usuário não autenticado');
 
-      // Validar formato da data
       if (!formData.birthDate) {
         throw new Error('Data de nascimento é obrigatória');
       }
 
       if (patientToEdit) {
-        // Atualizar
+        // ATUALIZAR
         const { error } = await supabase
           .from('patients')
           .update({
             name: formData.name,
-            birth_date: formData.birthDate, // Campo correto: birth_date
-            phone: formData.phone,
+            birth_date: formData.birthDate,
+            phone: formData.phone || null,
             caregiver_name: formData.caregiverName,
             caregiver_phone: formData.caregiverPhone,
           })
@@ -74,45 +109,24 @@ const PatientModal: React.FC<PatientModalProps> = ({ isOpen, onClose, onSuccess,
         if (error) throw error;
         addToast('Paciente atualizado com sucesso!', 'success');
       } else {
-        // Inserir
+        // INSERIR NOVO
+        // Garantir que a organização existe antes de inserir
+        await ensureOrganizationExists(user.id, user.email);
+
         const { error } = await supabase
           .from('patients')
           .insert({
-            organization_id: user.id, // Assumindo que organization_id é o user.id
+            organization_id: user.id,
             name: formData.name,
-            birth_date: formData.birthDate, // Campo correto: birth_date
-            phone: formData.phone,
+            birth_date: formData.birthDate,
+            phone: formData.phone || null,
             caregiver_name: formData.caregiverName,
             caregiver_phone: formData.caregiverPhone,
             active: true,
+            timezone: 'America/Sao_Paulo',
           });
 
-        if (error) {
-          if (error.code === '23503') {
-             // Lógica de auto-fix para FK
-             console.log('Tentando auto-fix de organização...');
-             const { error: orgError } = await supabase.from('organizations').insert({
-                id: user.id,
-                name: user.email?.split('@')[0] || 'Organização',
-                created_at: new Date().toISOString(),
-             });
-             if (orgError && orgError.code !== '23505') throw orgError;
-
-             // Retry
-             const { error: retryError } = await supabase.from('patients').insert({
-                organization_id: user.id,
-                name: formData.name,
-                birth_date: formData.birthDate,
-                phone: formData.phone,
-                caregiver_name: formData.caregiverName,
-                caregiver_phone: formData.caregiverPhone,
-                active: true,
-             });
-             if (retryError) throw retryError;
-          } else {
-             throw error;
-          }
-        }
+        if (error) throw error;
         addToast('Paciente cadastrado com sucesso!', 'success');
       }
 
@@ -120,7 +134,8 @@ const PatientModal: React.FC<PatientModalProps> = ({ isOpen, onClose, onSuccess,
       onClose();
     } catch (error: any) {
       console.error('Erro ao salvar paciente:', error);
-      addToast(`Erro ao salvar paciente: ${error.message || 'Erro desconhecido'}`, 'error');
+      const errorMessage = error.message || error.hint || 'Erro desconhecido';
+      addToast(`Erro ao salvar paciente: ${errorMessage}`, 'error');
     } finally {
       setLoading(false);
     }
