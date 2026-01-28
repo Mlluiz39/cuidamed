@@ -10,6 +10,19 @@ interface PatientListProps {
   onViewHistory?: (patientId: string) => void;
 }
 
+// Função auxiliar para calcular idade a partir da data de nascimento
+const calculateAge = (birthDate: string): number => {
+  if (!birthDate) return 0;
+  const today = new Date();
+  const birth = new Date(birthDate);
+  let age = today.getFullYear() - birth.getFullYear();
+  const monthDiff = today.getMonth() - birth.getMonth();
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+    age--;
+  }
+  return age;
+};
+
 const PatientList: React.FC<PatientListProps> = ({ onViewHistory }) => {
   const [userId, setUserId] = useState<string | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -51,8 +64,6 @@ const PatientList: React.FC<PatientListProps> = ({ onViewHistory }) => {
 
     if (confirmed) {
       try {
-        // Excluir medicamentos primeiro para evitar FK errors se não tiver cascade setado no banco
-        // Nota: Assumindo que o banco tem ON DELETE CASCADE para simplificar, se não tiver precisaria deletar filhos manual
         const { error } = await supabase.from('patients').delete().eq('id', patient.id);
         
         if (error) throw error;
@@ -102,78 +113,81 @@ const PatientList: React.FC<PatientListProps> = ({ onViewHistory }) => {
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {patients.map((patient) => (
-          <div key={patient.id} className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-visible hover:shadow-md transition-shadow relative">
-            <div className="p-6">
-              <div className="flex items-center gap-4 mb-6">
-                <img src={patient.avatar} alt={patient.name} className="w-16 h-16 rounded-full object-cover border-2 border-blue-50" />
-                <div className="flex-1">
-                  <h3 className="text-xl font-bold text-slate-800">{patient.name}</h3>
-                  <p className="text-slate-500 text-sm">{patient.age} anos • {patient.phone}</p>
-                </div>
-                <div className="text-right">
-                  <p className="text-xs font-bold text-slate-400 uppercase">Adesão</p>
-                  <p className={`text-2xl font-black ${patient.lastAdherence > 80 ? 'text-green-500' : 'text-amber-500'}`}>
-                    {patient.lastAdherence}%
-                  </p>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4 mb-6">
-                <div className="p-3 bg-slate-50 rounded-xl">
-                  <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Responsável</p>
-                  <p className="text-sm font-semibold text-slate-700">{patient.caregiverName}</p>
-                </div>
-                <div className="p-3 bg-slate-50 rounded-xl">
-                  <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Contato Urgência</p>
-                  <p className="text-sm font-semibold text-slate-700">{patient.caregiverPhone}</p>
-                </div>
-              </div>
-
-              <div className="flex gap-2 mt-6">
-                <button 
-                  onClick={() => onViewHistory && onViewHistory(patient.id)}
-                  className="flex-1 py-2 bg-slate-800 text-white rounded-xl text-sm font-bold hover:bg-slate-700 transition-colors"
-                >
-                  Ver Prontuário
-                </button>
-                <div className="relative">
-                  <button 
-                    onClick={() => setMenuOpenId(menuOpenId === patient.id ? null : patient.id)}
-                    className="px-4 py-2 border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors"
-                  >
-                     ⚙️
-                  </button>
-                  
-                  {menuOpenId === patient.id && (
-                    <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-xl border border-slate-100 z-10 overflow-hidden animate-fadeIn">
-                      <button 
-                        onClick={() => handleEdit(patient)}
-                        className="w-full text-left px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50 flex items-center gap-2"
-                      >
-                        ✏️ Editar Dados
-                      </button>
-                      <button 
-                        onClick={() => handleDelete(patient)}
-                        className="w-full text-left px-4 py-3 text-sm font-medium text-red-600 hover:bg-red-50 flex items-center gap-2"
-                      >
-                        🗑️ Excluir Paciente
-                      </button>
+          {patients.map((patient) => {
+            const age = calculateAge(patient.birthDate); // ✅ Calcular idade dinamicamente
+            
+            return (
+              <div key={patient.id} className="bg-white rounded-2xl shadow-sm border border-slate-100 overflow-visible hover:shadow-md transition-shadow relative">
+                <div className="p-6">
+                  <div className="flex items-center gap-4 mb-6">
+                    <img src={patient.avatar} alt={patient.name} className="w-16 h-16 rounded-full object-cover border-2 border-blue-50" />
+                    <div className="flex-1">
+                      <h3 className="text-xl font-bold text-slate-800">{patient.name}</h3>
+                      <p className="text-slate-500 text-sm">{age} anos{patient.phone ? ` • ${patient.phone}` : ''}</p>
                     </div>
-                  )}
-                  {/* Backdrop invisível para fechar menu ao clicar fora */}
-                  {menuOpenId === patient.id && (
-                    <div 
-                      className="fixed inset-0 z-0 bg-transparent cursor-default" 
-                      onClick={() => setMenuOpenId(null)}
-                      style={{ pointerEvents: 'auto' }}
-                    ></div>
-                  )}
+                    <div className="text-right">
+                      <p className="text-xs font-bold text-slate-400 uppercase">Adesão</p>
+                      <p className={`text-2xl font-black ${patient.lastAdherence > 80 ? 'text-green-500' : 'text-amber-500'}`}>
+                        {patient.lastAdherence}%
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4 mb-6">
+                    <div className="p-3 bg-slate-50 rounded-xl">
+                      <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Responsável</p>
+                      <p className="text-sm font-semibold text-slate-700">{patient.caregiverName}</p>
+                    </div>
+                    <div className="p-3 bg-slate-50 rounded-xl">
+                      <p className="text-[10px] font-bold text-slate-400 uppercase mb-1">Contato Urgência</p>
+                      <p className="text-sm font-semibold text-slate-700">{patient.caregiverPhone}</p>
+                    </div>
+                  </div>
+
+                  <div className="flex gap-2 mt-6">
+                    <button 
+                      onClick={() => onViewHistory && onViewHistory(patient.id)}
+                      className="flex-1 py-2 bg-slate-800 text-white rounded-xl text-sm font-bold hover:bg-slate-700 transition-colors"
+                    >
+                      Ver Prontuário
+                    </button>
+                    <div className="relative">
+                      <button 
+                        onClick={() => setMenuOpenId(menuOpenId === patient.id ? null : patient.id)}
+                        className="px-4 py-2 border border-slate-200 rounded-xl hover:bg-slate-50 transition-colors"
+                      >
+                         ⚙️
+                      </button>
+                      
+                      {menuOpenId === patient.id && (
+                        <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-xl shadow-xl border border-slate-100 z-10 overflow-hidden animate-fadeIn">
+                          <button 
+                            onClick={() => handleEdit(patient)}
+                            className="w-full text-left px-4 py-3 text-sm font-medium text-slate-700 hover:bg-slate-50 flex items-center gap-2"
+                          >
+                            ✏️ Editar Dados
+                          </button>
+                          <button 
+                            onClick={() => handleDelete(patient)}
+                            className="w-full text-left px-4 py-3 text-sm font-medium text-red-600 hover:bg-red-50 flex items-center gap-2"
+                          >
+                            🗑️ Excluir Paciente
+                          </button>
+                        </div>
+                      )}
+                      {menuOpenId === patient.id && (
+                        <div 
+                          className="fixed inset-0 z-0 bg-transparent cursor-default" 
+                          onClick={() => setMenuOpenId(null)}
+                          style={{ pointerEvents: 'auto' }}
+                        ></div>
+                      )}
+                    </div>
+                  </div>
                 </div>
               </div>
-            </div>
-          </div>
-        ))}
+            );
+          })}
         </div>
       )}
     </div>

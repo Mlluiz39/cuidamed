@@ -22,7 +22,7 @@ export function usePatients(userId: string | null) {
       const { data, error: supabaseError } = await supabase
         .from('patients')
         .select('*')
-        .eq('user_id', userId)
+        .eq('organization_id', userId) // ✅ CORRIGIDO: user_id → organization_id
         .order('name');
 
       if (supabaseError) throw supabaseError;
@@ -31,11 +31,12 @@ export function usePatients(userId: string | null) {
       const mappedPatients: Patient[] = (data || []).map(p => ({
         id: p.id,
         name: p.name,
-        age: p.age,
+        birthDate: p.birth_date || '', // ✅ CORRIGIDO: agora usando birth_date
+        age: p.age || 0, // Mantido para compatibilidade, mas pode calcular da birthDate
         phone: p.phone || '',
-        avatar: p.avatar || `https://picsum.photos/seed/${p.id}/200/200`,
-        caregiverName: p.caregiver_name,
-        caregiverPhone: p.caregiver_phone,
+        avatar: p.avatar || `https://ui-avatars.com/api/?name=${encodeURIComponent(p.name)}&background=random`,
+        caregiverName: p.caregiver_name || '',
+        caregiverPhone: p.caregiver_phone || '',
         lastAdherence: 0, // Será calculado depois
       }));
 
@@ -200,7 +201,7 @@ export function useDashboardStats(userId: string | null) {
       const { data: patients, error: patientsError } = await supabase
         .from('patients')
         .select('id')
-        .eq('user_id', userId);
+        .eq('organization_id', userId); // ✅ CORRIGIDO: user_id → organization_id
 
       if (patientsError) throw patientsError;
 
@@ -307,7 +308,7 @@ export function useWhatsAppLogs(userId: string | null) {
       const { data: patients, error: patientsError } = await supabase
         .from('patients')
         .select('id')
-        .eq('user_id', userId);
+        .eq('organization_id', userId); // ✅ CORRIGIDO: user_id → organization_id
 
       if (patientsError) throw patientsError;
 
