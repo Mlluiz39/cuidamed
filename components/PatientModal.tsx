@@ -15,7 +15,7 @@ const PatientModal: React.FC<PatientModalProps> = ({ isOpen, onClose, onSuccess,
   const { addToast } = useToast();
   const [formData, setFormData] = useState({
     name: '',
-    age: '',
+    birthDate: '',
     phone: '',
     caregiverName: '',
     caregiverPhone: '',
@@ -25,7 +25,7 @@ const PatientModal: React.FC<PatientModalProps> = ({ isOpen, onClose, onSuccess,
     if (isOpen && patientToEdit) {
       setFormData({
         name: patientToEdit.name,
-        age: patientToEdit.age.toString(),
+        birthDate: patientToEdit.birthDate || '', // Usando birthDate
         phone: patientToEdit.phone || '',
         caregiverName: patientToEdit.caregiverName,
         caregiverPhone: patientToEdit.caregiverPhone,
@@ -34,7 +34,7 @@ const PatientModal: React.FC<PatientModalProps> = ({ isOpen, onClose, onSuccess,
       // Limpar form se for novo cadastro
       setFormData({
         name: '',
-        age: '',
+        birthDate: '',
         phone: '',
         caregiverName: '',
         caregiverPhone: '',
@@ -53,9 +53,9 @@ const PatientModal: React.FC<PatientModalProps> = ({ isOpen, onClose, onSuccess,
       
       if (!user) throw new Error('Usuário não autenticado');
 
-      const ageInt = parseInt(formData.age);
-      if (isNaN(ageInt)) {
-        throw new Error('Idade inválida');
+      // Validar formato da data
+      if (!formData.birthDate) {
+        throw new Error('Data de nascimento é obrigatória');
       }
 
       if (patientToEdit) {
@@ -64,7 +64,7 @@ const PatientModal: React.FC<PatientModalProps> = ({ isOpen, onClose, onSuccess,
           .from('patients')
           .update({
             name: formData.name,
-            age: ageInt,
+            birth_date: formData.birthDate, // Campo correto: birth_date
             phone: formData.phone,
             caregiver_name: formData.caregiverName,
             caregiver_phone: formData.caregiverPhone,
@@ -78,36 +78,35 @@ const PatientModal: React.FC<PatientModalProps> = ({ isOpen, onClose, onSuccess,
         const { error } = await supabase
           .from('patients')
           .insert({
-            user_id: user.id,
+            organization_id: user.id, // Assumindo que organization_id é o user.id
             name: formData.name,
-            age: ageInt,
+            birth_date: formData.birthDate, // Campo correto: birth_date
             phone: formData.phone,
             caregiver_name: formData.caregiverName,
             caregiver_phone: formData.caregiverPhone,
-            avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(formData.name)}&background=random`,
+            active: true,
           });
 
         if (error) {
           if (error.code === '23503') {
-             // Lógica de auto-fix para FK (mantida simplificada para brevidade, mas idealmente reutilizável)
-             console.log('Tentando auto-fix de usuário...');
-             const { error: userError } = await supabase.from('users').insert({
+             // Lógica de auto-fix para FK
+             console.log('Tentando auto-fix de organização...');
+             const { error: orgError } = await supabase.from('organizations').insert({
                 id: user.id,
-                email: user.email,
-                name: user.email?.split('@')[0] || 'Usuário',
+                name: user.email?.split('@')[0] || 'Organização',
                 created_at: new Date().toISOString(),
              });
-             if (userError && userError.code !== '23505') throw userError;
+             if (orgError && orgError.code !== '23505') throw orgError;
 
              // Retry
              const { error: retryError } = await supabase.from('patients').insert({
-                user_id: user.id,
+                organization_id: user.id,
                 name: formData.name,
-                age: ageInt,
+                birth_date: formData.birthDate,
                 phone: formData.phone,
                 caregiver_name: formData.caregiverName,
                 caregiver_phone: formData.caregiverPhone,
-                avatar: `https://ui-avatars.com/api/?name=${encodeURIComponent(formData.name)}&background=random`,
+                active: true,
              });
              if (retryError) throw retryError;
           } else {
@@ -157,19 +156,19 @@ const PatientModal: React.FC<PatientModalProps> = ({ isOpen, onClose, onSuccess,
                 />
               </div>
               
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1">Idade *</label>
+              <div className="col-span-2">
+                <label className="block text-sm font-semibold text-slate-700 mb-1">Data de Nascimento *</label>
                 <input
-                  type="number"
+                  type="date"
                   required
-                  value={formData.age}
-                  onChange={e => setFormData({ ...formData, age: e.target.value })}
+                  value={formData.birthDate}
+                  onChange={e => setFormData({ ...formData, birthDate: e.target.value })}
                   className="w-full px-4 py-2 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
-                  placeholder="anos"
+                  max={new Date().toISOString().split('T')[0]}
                 />
               </div>
 
-              <div>
+              <div className="col-span-2">
                 <label className="block text-sm font-semibold text-slate-700 mb-1">Telefone</label>
                 <input
                   type="tel"

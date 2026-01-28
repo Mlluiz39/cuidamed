@@ -7,6 +7,7 @@ export enum AdherenceStatus {
 }
 
 export interface Patient {
+  birthDate: string;
   id: string;
   name: string;
   age: number;
