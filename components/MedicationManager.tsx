@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../services/supabaseClient';
 import { usePatients, useMedications } from '../hooks/useSupabaseData';
@@ -6,6 +5,19 @@ import { Medication } from '../types';
 
 import { useToast } from '../contexts/ToastContext';
 import { useConfirmationModal } from '../contexts/ConfirmationModalContext';
+
+// Função auxiliar para converter horário em minutos desde meia-noite
+const timeToMinutes = (time: string): number => {
+  const [hours, minutes] = time.split(':').map(Number);
+  return hours * 60 + minutes;
+};
+
+// Função auxiliar para converter minutos em horário
+const minutesToTime = (minutes: number): string => {
+  const hours = Math.floor(minutes / 60);
+  const mins = minutes % 60;
+  return `${String(hours).padStart(2, '0')}:${String(mins).padStart(2, '0')}`;
+};
 
 const MedicationManager: React.FC = () => {
   const [userId, setUserId] = useState<string | null>(null);
@@ -16,8 +28,8 @@ const MedicationManager: React.FC = () => {
     patientId: '',
     name: '',
     dosage: '',
-    frequency: '',
     times: [],
+    timesMinutes: [], // ✅ ADICIONADO
     active: true
   });
 
@@ -43,6 +55,9 @@ const MedicationManager: React.FC = () => {
     e.preventDefault();
     
     try {
+      // ✅ Calcular times_minutes a partir de times
+      const timesMinutes = (formData.times || []).map(timeToMinutes);
+
       if (editingId) {
         // Editar medicamento existente
         const { error } = await supabase
@@ -51,10 +66,9 @@ const MedicationManager: React.FC = () => {
             patient_id: formData.patientId,
             name: formData.name,
             dosage: formData.dosage,
-            frequency: formData.frequency,
             times: formData.times,
+            times_minutes: timesMinutes, // ✅ ADICIONADO
             active: formData.active,
-            updated_at: new Date().toISOString(),
           })
           .eq('id', editingId);
 
@@ -69,8 +83,8 @@ const MedicationManager: React.FC = () => {
             patient_id: formData.patientId,
             name: formData.name,
             dosage: formData.dosage,
-            frequency: formData.frequency,
             times: formData.times,
+            times_minutes: timesMinutes, // ✅ ADICIONADO
             active: formData.active ?? true,
           });
 
@@ -87,8 +101,8 @@ const MedicationManager: React.FC = () => {
         patientId: '',
         name: '',
         dosage: '',
-        frequency: '',
         times: [],
+        timesMinutes: [], // ✅ ADICIONADO
         active: true
       });
     } catch (error) {
@@ -159,9 +173,9 @@ const MedicationManager: React.FC = () => {
     setFormData({
       patientId: '',
       name: '',
-        dosage: '',
-      frequency: '',
+      dosage: '',
       times: [],
+      timesMinutes: [], // ✅ ADICIONADO
       active: true
     });
   };
@@ -232,7 +246,7 @@ const MedicationManager: React.FC = () => {
                 />
               </div>
 
-              <div>
+              <div className="md:col-span-2">
                 <label className="block text-sm font-semibold text-slate-700 mb-2">Dosagem *</label>
                 <input
                   type="text"
@@ -240,18 +254,6 @@ const MedicationManager: React.FC = () => {
                   onChange={(e) => setFormData({ ...formData, dosage: e.target.value })}
                   required
                   placeholder="Ex: 1 comprimido"
-                  className="w-full px-4 py-2 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-2">Frequência *</label>
-                <input
-                  type="text"
-                  value={formData.frequency}
-                  onChange={(e) => setFormData({ ...formData, frequency: e.target.value })}
-                  required
-                  placeholder="Ex: 2 vezes ao dia"
                   className="w-full px-4 py-2 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500"
                 />
               </div>
@@ -364,17 +366,13 @@ const MedicationManager: React.FC = () => {
                   <p className="text-slate-500 text-sm mb-3">
                     <span className="font-semibold text-slate-700">Paciente:</span> {getPatientName(med.patientId)}
                   </p>
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     <div className="p-3 bg-slate-50 rounded-xl">
                       <p className="text-xs font-bold text-slate-400 uppercase mb-1">Dosagem</p>
                       <p className="text-sm font-semibold text-slate-700">{med.dosage}</p>
                     </div>
                     <div className="p-3 bg-slate-50 rounded-xl">
-                      <p className="text-xs font-bold text-slate-400 uppercase mb-1">Frequência</p>
-                      <p className="text-sm font-semibold text-slate-700">{med.frequency}</p>
-                    </div>
-                    <div className="p-3 bg-slate-50 rounded-xl">
-                      <p className="text-xs font-bold text-slate-400 uppercase mb-1">Horários</p>
+                      <p className="text-xs font-bold text-slate-400 uppercase mb-1">Horários ({med.times.length}x ao dia)</p>
                       <p className="text-sm font-semibold text-slate-700">{med.times.join(', ')}</p>
                     </div>
                   </div>

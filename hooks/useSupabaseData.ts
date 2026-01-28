@@ -57,6 +57,7 @@ export function usePatients(userId: string | null) {
 }
 
 // Hook para buscar medicamentos
+// Hook para buscar medicamentos
 export function useMedications(patientId?: string) {
   const [medications, setMedications] = useState<Medication[]>([]);
   const [loading, setLoading] = useState(true);
@@ -89,6 +90,7 @@ export function useMedications(patientId?: string) {
         dosage: m.dosage,
         frequency: m.frequency,
         times: m.times || [],
+        timesMinutes: m.times_minutes || [],
         active: m.active,
       }));
 

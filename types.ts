@@ -25,6 +25,7 @@ export interface Medication {
   dosage: string;
   frequency: string;
   times: string[]; // e.g., ["08:00", "20:00"]
+  timesMinutes: number[];
   active: boolean;
 }
 
