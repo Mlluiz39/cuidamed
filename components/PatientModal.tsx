@@ -296,7 +296,7 @@ const PatientModal: React.FC<PatientModalProps> = ({ isOpen, onClose, onSuccess,
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-slate-700 mb-1">Telefone de Contato (WhatsApp) *</label>
+                <label className="block text-sm font-semibold text-slate-700 mb-1">Telefone de Contato (WhatsApp / Telegram) *</label>
                 <input
                   type="tel"
                   required
