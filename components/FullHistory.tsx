@@ -12,7 +12,6 @@ const FullHistory: React.FC<FullHistoryProps> = ({ initialPatientId }) => {
   const [userId, setUserId] = useState<string | null>(null);
   const [selectedPatient, setSelectedPatient] = useState<string>('all');
   const [selectedStatus, setSelectedStatus] = useState<string>('all');
-  const [selectedMedication, setSelectedMedication] = useState<string>('all');
 
   useEffect(() => {
     if (initialPatientId) {
@@ -29,27 +28,23 @@ const FullHistory: React.FC<FullHistoryProps> = ({ initialPatientId }) => {
   }, []);
 
   const { patients } = usePatients(userId);
+  const patientIds = patients.map(p => p.id);
   const { medications } = useMedications();
   const { history, loading } = useMedicationHistory({
     patientId: selectedPatient === 'all' ? undefined : selectedPatient,
+    patientIds: selectedPatient === 'all' ? patientIds : undefined,
     status: selectedStatus === 'all' ? undefined : (selectedStatus as AdherenceStatus),
   });
 
-  // Filtrar por medicamento (feito no cliente porque o filtro de medicamento é por nome)
-  const filteredHistory = selectedMedication === 'all'
-    ? history
-    : history.filter(h => h.medicationName === selectedMedication);
-
   // Calcular estatísticas
-  const totalRecords = filteredHistory.length;
-  const takenCount = filteredHistory.filter(h => h.status === AdherenceStatus.TAKEN).length;
-  const missedCount = filteredHistory.filter(h => h.status === AdherenceStatus.MISSED).length;
-  const pendingCount = filteredHistory.filter(h => h.status === AdherenceStatus.PENDING).length;
-  const delayedCount = filteredHistory.filter(h => h.status === AdherenceStatus.DELAYED).length;
+  const totalRecords = history.length;
+  const takenCount = history.filter(h => h.status === AdherenceStatus.TAKEN).length;
+  const missedCount = history.filter(h => h.status === AdherenceStatus.MISSED).length;
+  const pendingCount = history.filter(h => h.status === AdherenceStatus.PENDING).length;
+  const delayedCount = history.filter(h => h.status === AdherenceStatus.DELAYED).length;
   const adherenceRate = totalRecords > 0 ? Math.round((takenCount / totalRecords) * 100) : 0;
 
-  // Obter nomes únicos de medicamentos
-  const uniqueMedications = Array.from(new Set(history.map(h => h.medicationName)));
+
 
   const getPatientName = (patientId: string) => {
     return patients.find(p => p.id === patientId)?.name || 'Desconhecido';
@@ -164,27 +159,14 @@ const FullHistory: React.FC<FullHistoryProps> = ({ initialPatientId }) => {
             </select>
           </div>
 
-          <div>
-            <label className="block text-sm font-semibold text-slate-700 mb-2">Medicamento</label>
-            <select
-              value={selectedMedication}
-              onChange={(e) => setSelectedMedication(e.target.value)}
-              className="w-full px-4 py-2 border border-slate-200 rounded-xl bg-white text-slate-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
-            >
-              <option value="all">Todos os Medicamentos</option>
-              {uniqueMedications.map(med => (
-                <option key={med} value={med}>{med}</option>
-              ))}
-            </select>
-          </div>
+
         </div>
 
-        {(selectedPatient !== 'all' || selectedStatus !== 'all' || selectedMedication !== 'all') && (
+        {(selectedPatient !== 'all' || selectedStatus !== 'all') && (
           <button
             onClick={() => {
               setSelectedPatient('all');
               setSelectedStatus('all');
-              setSelectedMedication('all');
             }}
             className="mt-4 text-sm font-semibold text-blue-600 hover:underline"
           >
@@ -201,14 +183,14 @@ const FullHistory: React.FC<FullHistoryProps> = ({ initialPatientId }) => {
           <div className="text-center py-12">
             <p className="text-slate-400 text-lg">Carregando histórico...</p>
           </div>
-        ) : filteredHistory.length === 0 ? (
+        ) : history.length === 0 ? (
           <div className="text-center py-12">
             <p className="text-slate-400 text-lg">Nenhum registro encontrado.</p>
             <p className="text-slate-400 text-sm mt-2">Ajuste os filtros para visualizar mais dados.</p>
           </div>
         ) : (
           <div className="space-y-4">
-            {filteredHistory.map((record, idx) => (
+            {history.map((record, idx) => (
               <div 
                 key={record.id}
                 className="relative pl-8 pb-6 border-l-2 border-slate-200 last:border-l-0 last:pb-0"
@@ -225,7 +207,7 @@ const FullHistory: React.FC<FullHistoryProps> = ({ initialPatientId }) => {
                 <div className="bg-slate-50 p-4 rounded-xl border border-slate-100">
                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-3">
                     <div className="flex-1">
-                      <h4 className="text-lg font-bold text-slate-800">{record.medicationName}</h4>
+                      <h4 className="text-lg font-bold text-slate-800">Medicação às {record.scheduledTime}</h4>
                       <p className="text-sm text-slate-600">
                         <span className="font-semibold">Paciente:</span> {getPatientName(record.patientId)}
                       </p>
@@ -235,7 +217,7 @@ const FullHistory: React.FC<FullHistoryProps> = ({ initialPatientId }) => {
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                  <div className="grid grid-cols-2 gap-3 text-sm">
                     <div>
                       <p className="text-xs font-bold text-slate-400 uppercase">Data</p>
                       <p className="font-semibold text-slate-700">{record.date}</p>
@@ -243,18 +225,6 @@ const FullHistory: React.FC<FullHistoryProps> = ({ initialPatientId }) => {
                     <div>
                       <p className="text-xs font-bold text-slate-400 uppercase">Horário Agendado</p>
                       <p className="font-semibold text-slate-700">{record.scheduledTime}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs font-bold text-slate-400 uppercase">Horário Real</p>
-                      <p className="font-semibold text-slate-700">{record.actualTime || '—'}</p>
-                    </div>
-                    <div>
-                      <p className="text-xs font-bold text-slate-400 uppercase">Diferença</p>
-                      <p className="font-semibold text-slate-700">
-                        {record.actualTime 
-                          ? `${Math.abs(parseInt(record.actualTime.split(':')[0]) - parseInt(record.scheduledTime.split(':')[0]))}h` 
-                          : '—'}
-                      </p>
                     </div>
                   </div>
                 </div>

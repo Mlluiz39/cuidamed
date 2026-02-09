@@ -130,42 +130,42 @@ export type Database = {
       medication_history: {
         Row: {
           id: string;
+          organization_id: string;
           patient_id: string;
           medication_id: string | null;
-          medication_name: string;
           scheduled_time: string;
-          actual_time: string | null;
+          scheduled_minutes: number;
           status: 'taken' | 'missed' | 'pending' | 'delayed';
           date: string;
-          notes: string | null;
+          unique_id: string | null;
+          short_id: string | null;
           created_at: string;
-          updated_at: string;
         };
         Insert: {
           id?: string;
+          organization_id: string;
           patient_id: string;
           medication_id?: string | null;
-          medication_name: string;
           scheduled_time: string;
-          actual_time?: string | null;
+          scheduled_minutes: number;
           status?: 'taken' | 'missed' | 'pending' | 'delayed';
           date?: string;
-          notes?: string | null;
+          unique_id?: string | null;
+          short_id?: string | null;
           created_at?: string;
-          updated_at?: string;
         };
         Update: {
           id?: string;
+          organization_id?: string;
           patient_id?: string;
           medication_id?: string | null;
-          medication_name?: string;
           scheduled_time?: string;
-          actual_time?: string | null;
+          scheduled_minutes?: number;
           status?: 'taken' | 'missed' | 'pending' | 'delayed';
           date?: string;
-          notes?: string | null;
+          unique_id?: string | null;
+          short_id?: string | null;
           created_at?: string;
-          updated_at?: string;
         };
       };
       whatsapp_logs: {

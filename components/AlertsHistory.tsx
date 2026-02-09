@@ -16,7 +16,8 @@ const AlertsHistory: React.FC = () => {
   }, []);
 
   const { patients } = usePatients(userId);
-  const { history, loading } = useMedicationHistory({});
+  const patientIds = patients.map(p => p.id);
+  const { history, loading } = useMedicationHistory({ patientIds });
 
   // Filtrar apenas alertas (Perdidos, Pendentes, Atrasados)
   const alerts = history.filter(h => 
@@ -94,7 +95,7 @@ const AlertsHistory: React.FC = () => {
               >
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 mb-3">
                   <div className="flex-1">
-                    <h4 className="text-lg font-bold text-slate-800">{record.medicationName}</h4>
+                    <h4 className="text-lg font-bold text-slate-800">Medicação {record.scheduledTime}</h4>
                     <p className="text-sm text-slate-600">
                       <span className="font-semibold">Paciente:</span> {getPatientName(record.patientId)}
                     </p>

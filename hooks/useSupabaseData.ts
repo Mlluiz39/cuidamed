@@ -117,6 +117,7 @@ export function useMedications(patientId?: string) {
 // Hook para buscar histórico de medicamentos
 interface HistoryFilters {
   patientId?: string;
+  patientIds?: string[];
   startDate?: string;
   endDate?: string;
   status?: AdherenceStatus;
@@ -140,6 +141,8 @@ export function useMedicationHistory(filters: HistoryFilters = {}) {
 
       if (filters.patientId) {
         query = query.eq('patient_id', filters.patientId);
+      } else if (filters.patientIds && filters.patientIds.length > 0) {
+        query = query.in('patient_id', filters.patientIds);
       }
       if (filters.startDate) {
         query = query.gte('date', filters.startDate);
@@ -159,11 +162,14 @@ export function useMedicationHistory(filters: HistoryFilters = {}) {
       const mappedHistory: HistoryRecord[] = (data || []).map(h => ({
         id: h.id,
         patientId: h.patient_id,
-        medicationName: h.medication_name,
+        organizationId: h.organization_id,
+        medicationId: h.medication_id,
         scheduledTime: h.scheduled_time,
-        actualTime: h.actual_time || undefined,
+        scheduledMinutes: h.scheduled_minutes,
         status: h.status as AdherenceStatus,
         date: h.date,
+        uniqueId: h.unique_id,
+        shortId: h.short_id,
       }));
 
       setHistory(mappedHistory);

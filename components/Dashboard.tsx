@@ -23,8 +23,9 @@ const Dashboard: React.FC<DashboardProps> = ({ onViewAllAlerts }) => {
 
   // Hooks para buscar dados
   const { stats, loading: loadingStats } = useDashboardStats(userId);
-  const { history, loading: loadingHistory } = useMedicationHistory({});
   const { patients } = usePatients(userId);
+  const patientIds = patients.map(p => p.id);
+  const { history, loading: loadingHistory } = useMedicationHistory({ patientIds });
 
   // Dados para o gráfico (exemplo com dados estáticos, pode ser calculado do histórico)
   const chartData = [
@@ -108,7 +109,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onViewAllAlerts }) => {
                       <p className="text-sm font-semibold text-slate-800">
                         {patient?.name || 'Paciente desconhecido'}
                       </p>
-                      <p className="text-xs text-slate-500">Esqueceu {alert.medicationName} às {alert.scheduledTime}</p>
+                       <p className="text-xs text-slate-500">Medicamento às {alert.scheduledTime}</p>
                       <button className="mt-2 text-xs font-bold text-blue-600 hover:underline">
                         Enviar Lembrete Manual
                       </button>

@@ -36,11 +36,14 @@ export interface Medication {
 export interface HistoryRecord {
   id: string;
   patientId: string;
-  medicationName: string;
+  organizationId: string;
+  medicationId?: string;
   scheduledTime: string;
-  actualTime?: string;
+  scheduledMinutes: number;
   status: AdherenceStatus;
   date: string;
+  uniqueId?: string;
+  shortId?: string;
 }
 
 export interface DashboardStats {
