@@ -79,6 +79,23 @@ const PatientList: React.FC<PatientListProps> = ({ onViewHistory }) => {
 
   return (
     <div className="space-y-6 animate-fadeIn pb-24">
+      {/* Aviso sobre pacientes sem Telegram */}
+      {patients.some(p => !p.telegram_id) && (
+        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4">
+          <div className="flex items-start gap-3">
+            <span className="text-2xl">⚠️</span>
+            <div>
+              <p className="font-semibold text-amber-800">Atenção: Pacientes sem Telegram</p>
+              <p className="text-sm text-amber-700 mt-1">
+                Existem pacientes cadastrados sem vínculo ao Telegram. 
+                Eles <strong>não receberão alertas automáticas</strong> no bot.
+                Peça para o paciente enviar <strong>/start</strong> no bot e cadastre-o com o mesmo nome.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold text-slate-800">Pacientes</h2>
@@ -122,7 +139,24 @@ const PatientList: React.FC<PatientListProps> = ({ onViewHistory }) => {
                   <div className="flex items-center gap-4 mb-6">
                     <img src={patient.avatar} alt={patient.name} className="w-16 h-16 rounded-full object-cover border-2 border-blue-50" />
                     <div className="flex-1">
-                      <h3 className="text-xl font-bold text-slate-800">{patient.name}</h3>
+                      <div className="flex items-center gap-2">
+                        <h3 className="text-xl font-bold text-slate-800">{patient.name}</h3>
+                        {patient.telegram_id ? (
+                          <span className="px-2 py-0.5 bg-green-100 text-green-700 text-xs rounded-full font-medium flex items-center gap-1" title="Paciente vinculado ao Telegram">
+                            <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"/>
+                            </svg>
+                            Telegram
+                          </span>
+                        ) : (
+                          <span className="px-2 py-0.5 bg-red-100 text-red-700 text-xs rounded-full font-medium flex items-center gap-1" title="Paciente não vinculado ao Telegram - não receberá alertas">
+                            <svg className="w-3 h-3" fill="currentColor" viewBox="0 0 24 24">
+                              <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+                            </svg>
+                            Sem Telegram
+                          </span>
+                        )}
+                      </div>
                       <p className="text-slate-500 text-sm">{age} anos{patient.phone ? ` • ${patient.phone}` : ''}</p>
                     </div>
                     <div className="text-right">

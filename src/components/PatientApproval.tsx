@@ -136,11 +136,35 @@ export default function PatientApproval() {
             </p>
           </div>
         ) : (
+          <>
+            <div className="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-blue-800 text-sm">
+                <strong>💡 Dica:</strong> Certifique-se de ativar apenas pacientes que têm ID do Telegram cadastrado. 
+                Pacientes sem ID do Telegram não receberão mensagens no bot.
+              </p>
+            </div>
+            
+            {patients.some(p => !p.telegram_id) && (
+              <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-lg">
+                <p className="text-red-800 text-sm font-semibold">
+                  ⚠️ Atenção: Existem pacientes sem ID do Telegram! 
+                  Eles não receberão mensagens mesmo após a ativação.
+                </p>
+              </div>
+            )}
+          </>
+        )}
+        
+        {patients.length > 0 && (
           <div className="space-y-4">
             {patients.map((patient) => (
               <div 
                 key={patient.id} 
-                className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow bg-white"
+                className={`border rounded-lg p-4 hover:shadow-md transition-shadow ${
+                  patient.telegram_id 
+                    ? 'border-gray-200 bg-white' 
+                    : 'border-red-300 bg-red-50'
+                }`}
               >
                 <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
                   <div className="flex-1">
@@ -151,6 +175,11 @@ export default function PatientApproval() {
                       <span className="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-full">
                         Pendente
                       </span>
+                      {!patient.telegram_id && (
+                        <span className="px-2 py-1 bg-red-100 text-red-800 text-xs rounded-full font-bold">
+                          ⚠️ Sem Telegram ID
+                        </span>
+                      )}
                     </div>
                     
                     <div className="mt-2 space-y-1 text-sm text-gray-600">
@@ -177,12 +206,19 @@ export default function PatientApproval() {
                     </div>
                   </div>
 
-                  <div className="flex gap-2">
+                  <div className="flex flex-col gap-2">
+                    {!patient.telegram_id && (
+                      <p className="text-xs text-red-600 mb-1">
+                        ❌ Este paciente não tem ID do Telegram cadastrado e não receberá mensagens!
+                      </p>
+                    )}
+                    <div className="flex gap-2">
                     <button
                       onClick={() => activatePatient(patient.id, patient.name)}
-                      disabled={activating === patient.id}
+                      disabled={activating === patient.id || !patient.telegram_id}
+                      title={!patient.telegram_id ? 'Não é possível ativar sem ID do Telegram' : ''}
                       className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${
-                        activating === patient.id
+                        activating === patient.id || !patient.telegram_id
                           ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
                           : 'bg-green-500 hover:bg-green-600 text-white shadow-sm hover:shadow'
                       }`}
@@ -214,6 +250,7 @@ export default function PatientApproval() {
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
                       </svg>
                     </button>
+                    </div>
                   </div>
                 </div>
               </div>

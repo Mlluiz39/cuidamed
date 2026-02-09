@@ -12,6 +12,7 @@ interface PatientModalProps {
 
 const PatientModal: React.FC<PatientModalProps> = ({ isOpen, onClose, onSuccess, patientToEdit }) => {
   const [loading, setLoading] = useState(false);
+  const [existingPatient, setExistingPatient] = useState<any>(null);
   const { addToast } = useToast();
   const [formData, setFormData] = useState({
     name: '',
@@ -20,6 +21,28 @@ const PatientModal: React.FC<PatientModalProps> = ({ isOpen, onClose, onSuccess,
     caregiverName: '',
     caregiverPhone: '',
   });
+
+  // Verificar se existe paciente com mesmo nome no bot
+  useEffect(() => {
+    if (!patientToEdit && formData.name.length > 2) {
+      const checkExisting = setTimeout(async () => {
+        const { data } = await supabase
+          .from('patients')
+          .select('*')
+          .ilike('name', `%${formData.name}%`)
+          .not('telegram_id', 'is', null)
+          .eq('status', 'pending');
+        
+        if (data && data.length > 0) {
+          setExistingPatient(data[0]);
+        } else {
+          setExistingPatient(null);
+        }
+      }, 500);
+      
+      return () => clearTimeout(checkExisting);
+    }
+  }, [formData.name, patientToEdit]);
 
   useEffect(() => {
     if (isOpen && patientToEdit) {
@@ -110,24 +133,54 @@ const PatientModal: React.FC<PatientModalProps> = ({ isOpen, onClose, onSuccess,
         addToast('Paciente atualizado com sucesso!', 'success');
       } else {
         // INSERIR NOVO
-        // Garantir que a organização existe antes de inserir
-        await ensureOrganizationExists(user.id, user.email);
-
-        const { error } = await supabase
+        // Verificar se já existe um paciente com o mesmo nome cadastrado pelo bot
+        const { data: existingBotPatient } = await supabase
           .from('patients')
-          .insert({
-            organization_id: user.id,
-            name: formData.name,
-            birth_date: formData.birthDate,
-            phone: formData.phone || null,
-            caregiver_name: formData.caregiverName,
-            caregiver_phone: formData.caregiverPhone,
-            active: true,
-            timezone: 'America/Sao_Paulo',
-          });
+          .select('*')
+          .ilike('name', formData.name)
+          .not('telegram_id', 'is', null)
+          .eq('status', 'pending')
+          .single();
 
-        if (error) throw error;
-        addToast('Paciente cadastrado com sucesso!', 'success');
+        if (existingBotPatient) {
+          // Paciente já existe (cadastrado pelo bot), apenas atualizar com dados da organização
+          const { error } = await supabase
+            .from('patients')
+            .update({
+              organization_id: user.id,
+              birth_date: formData.birthDate,
+              phone: formData.phone || null,
+              caregiver_name: formData.caregiverName,
+              caregiver_phone: formData.caregiverPhone,
+              active: true,
+              timezone: 'America/Sao_Paulo',
+              status: 'active' // Ativar automaticamente já que tem telegram_id
+            })
+            .eq('id', existingBotPatient.id);
+
+          if (error) throw error;
+          addToast(`Paciente vinculado ao Telegram! O paciente já tinha se registrado no bot (@${existingBotPatient.username || 'sem username'}).`, 'success');
+        } else {
+          // Criar novo paciente
+          await ensureOrganizationExists(user.id, user.email);
+
+          const { error } = await supabase
+            .from('patients')
+            .insert({
+              organization_id: user.id,
+              name: formData.name,
+              birth_date: formData.birthDate,
+              phone: formData.phone || null,
+              caregiver_name: formData.caregiverName,
+              caregiver_phone: formData.caregiverPhone,
+              active: true,
+              timezone: 'America/Sao_Paulo',
+              status: 'pending', // Aguardando confirmação no Telegram
+            });
+
+          if (error) throw error;
+          addToast('Paciente cadastrado! Peça para ele enviar /start no bot do Telegram para receber alertas.', 'warning');
+        }
       }
 
       onSuccess();
@@ -151,9 +204,40 @@ const PatientModal: React.FC<PatientModalProps> = ({ isOpen, onClose, onSuccess,
           ✕
         </button>
 
-        <h2 className="text-xl font-bold text-slate-800 mb-6">
+        <h2 className="text-xl font-bold text-slate-800 mb-2">
           {patientToEdit ? 'Editar Paciente' : 'Novo Paciente'}
         </h2>
+
+        {/* Mensagem informativa sobre fluxo Telegram */}
+        {!patientToEdit && (
+          <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg text-sm">
+            <p className="text-blue-800">
+              <strong>💡 Fluxo de Cadastro:</strong>
+            </p>
+            <ul className="text-blue-700 mt-1 space-y-1 text-xs">
+              <li>1. Paciente deve enviar <strong>/start</strong> no bot do Telegram primeiro</li>
+              <li>2. Cadastre o paciente aqui com o mesmo nome</li>
+              <li>3. O sistema vinculará automaticamente ao Telegram</li>
+            </ul>
+          </div>
+        )}
+
+        {/* Alerta se paciente já existe no bot */}
+        {!patientToEdit && existingPatient && (
+          <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded-lg">
+            <p className="text-green-800 text-sm font-semibold">
+              ✅ Paciente encontrado no Telegram!
+            </p>
+            <p className="text-green-700 text-xs mt-1">
+              Nome: {existingPatient.name}<br/>
+              ID Telegram: {existingPatient.telegram_id}<br/>
+              Username: @{existingPatient.username || 'não informado'}
+            </p>
+            <p className="text-green-600 text-xs mt-1">
+              Ao salvar, este cadastro será vinculado automaticamente.
+            </p>
+          </div>
+        )}
 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-4">

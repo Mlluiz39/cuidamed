@@ -16,6 +16,10 @@ export interface Patient {
   caregiverName: string;
   caregiverPhone: string;
   lastAdherence: number; // percentage
+  telegram_id?: string | null;
+  status?: 'pending' | 'active' | 'inactive';
+  username?: string | null;
+  organization_id?: string;
 }
 
 export interface Medication {

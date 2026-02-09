@@ -38,6 +38,10 @@ export function usePatients(userId: string | null) {
         caregiverName: p.caregiver_name || '',
         caregiverPhone: p.caregiver_phone || '',
         lastAdherence: 0, // Será calculado depois
+        telegram_id: p.telegram_id,
+        status: p.status,
+        username: p.username,
+        organization_id: p.organization_id,
       }));
 
       setPatients(mappedPatients);
