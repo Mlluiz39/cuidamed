@@ -15,7 +15,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentTab, setTab, isOpen = false, o
     { id: 'medications', label: 'Medicamentos', icon: '💊' },
     { id: 'approvals', label: 'Aprovações', icon: '✅' },
     { id: 'history', label: 'Histórico', icon: '📜' },
-    { id: 'whatsapp', label: 'Monitor WhatsApp', icon: '💬' },
+    { id: 'whatsapp', label: 'Monitor Telegram', icon: '💬' },
   ];
 
   const handleItemClick = (id: string) => {
