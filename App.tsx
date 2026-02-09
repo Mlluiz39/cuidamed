@@ -7,7 +7,7 @@ import ToastContainer from './components/ToastContainer'
 import Sidebar from './components/Sidebar'
 import Dashboard from './components/Dashboard'
 import PatientList from './components/PatientList'
-import WhatsAppMonitor from './components/WhatsAppMonitor'
+import TelegramAppMonitor from './components/TelegramMonitor'
 import MedicationManager from './components/MedicationManager'
 import FullHistory from './components/FullHistory'
 import AlertsHistory from './components/AlertsHistory'
@@ -51,7 +51,7 @@ const App: React.FC = () => {
       case 'patients':
         return <PatientList onViewHistory={handleViewHistory} />
       case 'whatsapp':
-        return <WhatsAppMonitor />
+        return <TelegramAppMonitor />
       case 'medications':
         return <MedicationManager />
       case 'history':
