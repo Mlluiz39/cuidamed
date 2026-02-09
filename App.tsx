@@ -11,6 +11,7 @@ import WhatsAppMonitor from './components/WhatsAppMonitor'
 import MedicationManager from './components/MedicationManager'
 import FullHistory from './components/FullHistory'
 import AlertsHistory from './components/AlertsHistory'
+import PatientApproval from './src/components/PatientApproval'
 
 const App: React.FC = () => {
   const [session, setSession] = useState<Session | null>(null)
@@ -57,6 +58,8 @@ const App: React.FC = () => {
         return <FullHistory initialPatientId={historyFilter.patientId} />
       case 'alerts':
         return <AlertsHistory />
+      case 'approvals':
+        return <PatientApproval />
       default:
         return <Dashboard onViewAllAlerts={handleViewAllAlerts} />
     }
@@ -149,6 +152,16 @@ const App: React.FC = () => {
           >
             <span className="text-xl">💬</span>
             <span className="text-[10px] font-bold">Monitor</span>
+          </button>
+
+          <button
+            onClick={() => setCurrentTab('approvals')}
+            className={`p-2 flex flex-col items-center ${
+              currentTab === 'approvals' ? 'text-blue-600' : 'text-slate-400'
+            }`}
+          >
+            <span className="text-xl">✅</span>
+            <span className="text-[10px] font-bold">Aprovar</span>
           </button>
         </div>
       </main>

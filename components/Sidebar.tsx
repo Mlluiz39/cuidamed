@@ -13,6 +13,7 @@ const Sidebar: React.FC<SidebarProps> = ({ currentTab, setTab, isOpen = false, o
     { id: 'dashboard', label: 'Painel Geral', icon: '📊' },
     { id: 'patients', label: 'Pacientes', icon: '👥' },
     { id: 'medications', label: 'Medicamentos', icon: '💊' },
+    { id: 'approvals', label: 'Aprovações', icon: '✅' },
     { id: 'history', label: 'Histórico', icon: '📜' },
     { id: 'whatsapp', label: 'Monitor WhatsApp', icon: '💬' },
   ];
