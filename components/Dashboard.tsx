@@ -46,7 +46,7 @@ const Dashboard: React.FC<DashboardProps> = ({ onViewAllAlerts }) => {
     { label: 'Pacientes Ativos', value: loadingStats ? '...' : stats.activePatients.toString(), icon: '👥', color: 'bg-blue-500' },
     { label: 'Adesão Média', value: loadingStats ? '...' : `${stats.adherenceRate}%`, icon: '📈', color: 'bg-green-500' },
     { label: 'Alertas Pendentes', value: loadingStats ? '...' : stats.pendingAlerts.toString(), icon: '⚠️', color: 'bg-amber-500' },
-    { label: 'Meds Hoje', value: loadingStats ? '...' : stats.medicationsToday.toString(), icon: '💊', color: 'bg-purple-500' },
+    { label: 'Medicamentos Hoje', value: loadingStats ? '...' : stats.medicationsToday.toString(), icon: '💊', color: 'bg-purple-500' },
   ];
 
   return (
